@@ -1,5 +1,5 @@
 /*
-LodePNG version 20260119
+LodePNG version 20261001
 
 Copyright (c) 2005-2026 Lode Vandevenne
 
@@ -44,7 +44,7 @@ Rename this file to lodepng.cpp to use it for C++, or to lodepng.c to use it for
 #pragma warning( disable : 4996 ) /*VS does not like fopen, but fopen_s is not standard C so unusable here*/
 #endif /*_MSC_VER */
 
-const char* LODEPNG_VERSION_STRING = "20260119";
+const char* LODEPNG_VERSION_STRING = "20261001";
 
 /*
 This source file is divided into the following large parts. The code sections
@@ -2113,14 +2113,14 @@ static unsigned deflate(unsigned char** out, size_t* outsize,
 /* / Adler32                                                                / */
 /* ////////////////////////////////////////////////////////////////////////// */
 
-static unsigned update_adler32(unsigned adler, const unsigned char* data, unsigned len) {
+static unsigned update_adler32(unsigned adler, const unsigned char* data, size_t len) {
   unsigned s1 = adler & 0xffffu;
   unsigned s2 = (adler >> 16u) & 0xffffu;
 
   while(len != 0u) {
-    unsigned i;
+    size_t i;
     /*at least 5552 sums can be done before the sums overflow, saving a lot of module divisions*/
-    unsigned amount = len > 5552u ? 5552u : len;
+    size_t amount = len > 5552u ? 5552u : len;
     len -= amount;
     for(i = 0; i != amount; ++i) {
       s1 += (*data++);
@@ -2134,7 +2134,7 @@ static unsigned update_adler32(unsigned adler, const unsigned char* data, unsign
 }
 
 /*Return the adler32 of the bytes data[0..len-1]*/
-static unsigned adler32(const unsigned char* data, unsigned len) {
+static unsigned adler32(const unsigned char* data, size_t len) {
   return update_adler32(1u, data, len);
 }
 
@@ -2178,7 +2178,7 @@ static unsigned lodepng_zlib_decompressv(ucvector* out,
 
   if(!settings->ignore_adler32) {
     unsigned ADLER32 = lodepng_read32bitInt(&in[insize - 4]);
-    unsigned checksum = adler32(out->data, (unsigned)(out->size));
+    unsigned checksum = adler32(out->data, out->size);
     if(checksum != ADLER32) return 58; /*error, adler checksum not correct, data must be corrupted*/
   }
 
@@ -2243,7 +2243,7 @@ unsigned lodepng_zlib_compress(unsigned char** out, size_t* outsize, const unsig
   }
 
   if(!error) {
-    unsigned ADLER32 = adler32(in, (unsigned)insize);
+    unsigned ADLER32 = adler32(in, insize);
     /*zlib data: 1 byte CMF (CM+CINFO), 1 byte FLG, deflate data, 4 byte ADLER32 checksum of the Decompressed data*/
     unsigned CMF = 120; /*0b01111000: CM 8, CINFO 7. With CINFO 7, any window size up to 32768 can be used.*/
     unsigned FLEVEL = 0;
